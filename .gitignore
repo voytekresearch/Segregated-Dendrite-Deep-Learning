@@ -9,3 +9,4 @@
 *.json
 *.txt
 Simulations/*
+*-checkpoint.ipynb

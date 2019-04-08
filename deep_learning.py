@@ -696,6 +696,12 @@ class Network:
                                          'A_hist_{}.csv'.format(m)),
                             'a') as A_hist_file:
                         np.savetxt(A_hist_file, self.A_hists[m])
+                    with open(
+                        os.path.join(self.simulation_path,
+                                     'O_hist_{}.csv'.format(m)),
+                        'a') as O_hist_file:
+                        np.savetxt(O_hist_file, self.O_hists[m])
+                    
                 with open(
                         os.path.join(self.simulation_path,
                                      'B_hist_{}.csv'.format(m)),
@@ -706,6 +712,7 @@ class Network:
                                      'C_hist_{}.csv'.format(m)),
                         'a') as C_hist_file:
                     np.savetxt(C_hist_file, self.C_hists[m])
+                
 
     def t_phase(self, x, t, training_num):
         '''
@@ -818,6 +825,12 @@ class Network:
                                          'A_hist_{}.csv'.format(m)),
                             'a') as A_hist_file:
                         np.savetxt(A_hist_file, self.A_hists[m])
+                    with open(
+                            os.path.join(self.simulation_path,
+                                         'O_hist_{}.csv'.format(m)),
+                            'a') as O_hist_file:
+                        np.savetxt(O_hist_file, self.O_hists[m])
+                    
                 with open(
                         os.path.join(self.simulation_path,
                                      'B_hist_{}.csv'.format(m)),

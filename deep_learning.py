@@ -63,8 +63,8 @@ n_quick_test = 100  # number of examples to use for quick tests (every 1000 exam
 
 # -----------
 # Oscillation
-use_oscillation = False
-A = 0
+use_oscillation = True
+A = 0.5
 f = 8
 phi = 0
 min_A = 0
@@ -2180,16 +2180,23 @@ class hiddenLayer(Layer):
             if use_oscillation:
                 ms = 1000  # dt in ms; need them in seconds
                 tspan = (self.integration_counter / ms,
-                         self.integration_counter / ms)
+                         self.integration_counter / ms + 1 / ms)
 
                 # Same osc func as the rest of VB experiments. See:
                 # https://github.com/voytekresearch/voltagebudget
-                self.O = burst(
-                    tspan, onset, n_cycles, A, f, phi, dt / ms, min_A=min_A)
+                _, self.O = burst(
+                    tspan,
+                    onset,
+                    n_cycles,
+                    A,
+                    f,
+                    phi,
+                    1 / (dt * ms),
+                    min_A=min_A)
             else:
                 self.O = 0.0
 
-            # Inject oscillation to computation (self.O might be 0).
+            # TODO Inject oscillation to computation (self.O might be 0).
             self.C += self.O
         else:
             self.C = k_B * self.B

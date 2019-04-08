@@ -41,7 +41,7 @@ net.train(
     n_training_examples,
     save_simulation=True,
     simulations_folder="Simulations",
-    folder_name="Osc Simulation")
+    folder_name="Comp Simulation")
 
 # # re-load the saved simulation & network
 # net, f_etas, b_etas, n_training_examples = dl.load_simulation(

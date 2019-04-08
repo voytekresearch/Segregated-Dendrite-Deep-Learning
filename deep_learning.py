@@ -66,7 +66,7 @@ prng = np.random.RandomState(seed_value)
 
 # -----------
 # Oscillation
-use_oscillation = True
+use_oscillation = False
 A = 1.0
 f = 8
 phi = 0
@@ -300,40 +300,34 @@ class Network:
             if m != 0:
                 if use_broadcast:
                     if use_weight_optimization:
-                        self.Y[m -
-                               1] = W_avg + 3.465 * W_sd * prng.uniform(
-                                   -1, 1, size=(N, self.n[-1]))
+                        self.Y[m - 1] = W_avg + 3.465 * W_sd * prng.uniform(
+                            -1, 1, size=(N, self.n[-1]))
 
                         if use_feedback_bias:
-                            self.c[
-                                m -
-                                1] = b_avg + 3.465 * b_sd * prng.uniform(
-                                    -1, 1, size=(N, 1))
+                            self.c[m -
+                                   1] = b_avg + 3.465 * b_sd * prng.uniform(
+                                       -1, 1, size=(N, 1))
                     else:
                         self.Y[m - 1] = prng.uniform(
                             -1, 1, size=(N, self.n[-1]))
 
                         if use_feedback_bias:
-                            self.c[m - 1] = prng.uniform(
-                                -1, 1, size=(N, 1))
+                            self.c[m - 1] = prng.uniform(-1, 1, size=(N, 1))
                 else:
                     if use_weight_optimization:
-                        self.Y[m -
-                               1] = W_avg + 3.465 * W_sd * prng.uniform(
-                                   -1, 1, size=(N, self.n[m]))
+                        self.Y[m - 1] = W_avg + 3.465 * W_sd * prng.uniform(
+                            -1, 1, size=(N, self.n[m]))
 
                         if use_feedback_bias:
-                            self.c[
-                                m -
-                                1] = b_avg + 3.465 * b_sd * prng.uniform(
-                                    -1, 1, size=(N, 1))
+                            self.c[m -
+                                   1] = b_avg + 3.465 * b_sd * prng.uniform(
+                                       -1, 1, size=(N, 1))
                     else:
                         self.Y[m - 1] = prng.uniform(
                             -1, 1, size=(N, self.n[m]))
 
                         if use_feedback_bias:
-                            self.c[m - 1] = prng.uniform(
-                                -1, 1, size=(N, 1))
+                            self.c[m - 1] = prng.uniform(-1, 1, size=(N, 1))
 
         if use_symmetric_weights == True:
             # enforce symmetric weights
@@ -393,8 +387,8 @@ class Network:
                     # for other hidden layers, use product of all feedforward weights downstream
                     if noisy_symmetric_weights:
                         self.Y[m] = np.dot(
-                            W_above + prng.normal(
-                                0, 0.05, size=W_above.shape), self.Y[m + 1])
+                            W_above + prng.normal(0, 0.05, size=W_above.shape),
+                            self.Y[m + 1])
                     else:
                         self.Y[m] = np.dot(W_above, self.Y[m + 1])
         else:
@@ -690,32 +684,44 @@ class Network:
                                lambda_max * sigma(self.l[-1].average_C_f))),
                     self.Y[-2]))
 
+        # -
+        # append voltages to files
         if record_voltages and training:
-            # append voltages to files
             for m in xrange(self.M):
+                # Save histories that don't happen in the final layer.
                 if m != self.M - 1:
-                    with open(
-                            os.path.join(self.simulation_path,
-                                         'A_hist_{}.csv'.format(m)),
-                            'a') as A_hist_file:
-                        np.savetxt(A_hist_file, self.A_hists[m])
-                    with open(
-                        os.path.join(self.simulation_path,
-                                     'O_hist_{}.csv'.format(m)),
-                        'a') as O_hist_file:
-                        np.savetxt(O_hist_file, self.O_hists[m])
-                    
-                with open(
-                        os.path.join(self.simulation_path,
-                                     'B_hist_{}.csv'.format(m)),
-                        'a') as B_hist_file:
-                    np.savetxt(B_hist_file, self.B_hists[m])
-                with open(
-                        os.path.join(self.simulation_path,
-                                     'C_hist_{}.csv'.format(m)),
-                        'a') as C_hist_file:
-                    np.savetxt(C_hist_file, self.C_hists[m])
-                
+                    # A histories
+                    filename = os.path.join(self.simulation_path,
+                                            'A_hist_{}.csv'.format(m))
+                    with open(filename, 'a') as A_hist_file:
+                        A_m = self.A_hists[m]
+                        A_m = np.vstack([np.arange(A_m.shape[0]), A_m.T]).T
+                        np.savetxt(A_hist_file, A_m)
+
+                    # O histories
+                    filename = os.path.join(self.simulation_path,
+                                            'O_hist_{}.csv'.format(m))
+                    with open(filename, 'a') as O_hist_file:
+                        O_m = self.O_hists[m]
+                        O_m = np.vstack([np.arange(O_m.shape[0]), O_m.T]).T
+                        np.savetxt(O_hist_file, O_m)
+
+                # Save histories in all layers
+                # B history
+                filename = os.path.join(self.simulation_path,
+                                        'B_hist_{}.csv'.format(m))
+                with open(filename, 'a') as B_hist_file:
+                    B_m = self.B_hists[m]
+                    B_m = np.vstack([np.arange(B_m.shape[0]), B_m.T]).T
+                    np.savetxt(B_hist_file, B_m)
+
+                # C history
+                filename = os.path.join(self.simulation_path,
+                                        'C_hist_{}.csv'.format(m))
+                with open(filename, 'a') as C_hist_file:
+                    C_m = self.C_hists[m]
+                    C_m = np.vstack([np.arange(C_m.shape[0]), C_m.T]).T
+                    np.savetxt(C_hist_file, B_m)
 
     def t_phase(self, x, t, training_num):
         '''
@@ -819,31 +825,68 @@ class Network:
                 # increase magnitude of surviving weights
                 self.Y[m] *= 5
 
+        # -
         if record_voltages:
-            # append voltages to files
             for m in xrange(self.M):
+                # Save histories that don't happen in the final layer.
                 if m != self.M - 1:
-                    with open(
-                            os.path.join(self.simulation_path,
-                                         'A_hist_{}.csv'.format(m)),
-                            'a') as A_hist_file:
-                        np.savetxt(A_hist_file, self.A_hists[m])
-                    with open(
-                            os.path.join(self.simulation_path,
-                                         'O_hist_{}.csv'.format(m)),
-                            'a') as O_hist_file:
-                        np.savetxt(O_hist_file, self.O_hists[m])
-                    
-                with open(
-                        os.path.join(self.simulation_path,
-                                     'B_hist_{}.csv'.format(m)),
-                        'a') as B_hist_file:
-                    np.savetxt(B_hist_file, self.B_hists[m])
-                with open(
-                        os.path.join(self.simulation_path,
-                                     'C_hist_{}.csv'.format(m)),
-                        'a') as C_hist_file:
-                    np.savetxt(C_hist_file, self.C_hists[m])
+                    # A histories
+                    filename = os.path.join(self.simulation_path,
+                                            'A_hist_{}.csv'.format(m))
+                    with open(filename, 'a') as A_hist_file:
+                        A_m = self.A_hists[m]
+                        A_m = np.vstack([np.arange(A_m.shape[0]), A_m.T]).T
+                        np.savetxt(A_hist_file, A_m)
+
+                    # O histories
+                    filename = os.path.join(self.simulation_path,
+                                            'O_hist_{}.csv'.format(m))
+                    with open(filename, 'a') as O_hist_file:
+                        O_m = self.O_hists[m]
+                        O_m = np.vstack([np.arange(O_m.shape[0]), O_m.T]).T
+                        np.savetxt(O_hist_file, O_m)
+
+                # Save histories in all layers
+                # B history
+                filename = os.path.join(self.simulation_path,
+                                        'B_hist_{}.csv'.format(m))
+                with open(filename, 'a') as B_hist_file:
+                    B_m = self.B_hists[m]
+                    B_m = np.vstack([np.arange(B_m.shape[0]), B_m.T]).T
+                    np.savetxt(B_hist_file, B_m)
+
+                # C history
+                filename = os.path.join(self.simulation_path,
+                                        'C_hist_{}.csv'.format(m))
+                with open(filename, 'a') as C_hist_file:
+                    C_m = self.C_hists[m]
+                    C_m = np.vstack([np.arange(C_m.shape[0]), C_m.T]).T
+                    np.savetxt(C_hist_file, B_m)
+
+        # # append voltages to files
+        # for m in xrange(self.M):
+        #     if m != self.M - 1:
+        #         with open(
+        #                 os.path.join(self.simulation_path,
+        #                              'A_hist_{}.csv'.format(m)),
+        #                 'a') as A_hist_file:
+        #             np.savetxt(A_hist_file, self.A_hists[m])
+        #         with open(
+        #                 os.path.join(self.simulation_path,
+        #                              'O_hist_{}.csv'.format(m)),
+        #                 'a') as O_hist_file:
+        #             np.savetxt(O_hist_file, self.O_hists[m])
+
+        #     with open(
+        #             os.path.join(self.simulation_path,
+        #                          'B_hist_{}.csv'.format(m)),
+        #             'a') as B_hist_file:
+        #         np.savetxt(B_hist_file, self.B_hists[m])
+        #     with open(
+        #             os.path.join(self.simulation_path,
+        #                          'C_hist_{}.csv'.format(m)),
+        #             'a') as C_hist_file:
+        #         np.savetxt(C_hist_file, self.C_hists[m])
 
     def train(self,
               f_etas,

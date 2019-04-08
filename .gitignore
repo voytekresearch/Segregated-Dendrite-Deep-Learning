@@ -1,0 +1,8 @@
+*.pyc
+*.idx3*
+*.idx1*
+*.npy
+*.csv
+*.json
+*.txt
+Simulations/*

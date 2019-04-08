@@ -1,4 +1,7 @@
+# Python
 *.pyc
+
+# Data
 *.idx3*
 *.idx1*
 *.npy

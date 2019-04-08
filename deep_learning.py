@@ -61,10 +61,13 @@ n_quick_test = 100  # number of examples to use for quick tests (every 1000 exam
 """                 Simulation parameters                     """
 # ---------------------------------------------------------------
 
+seed_value = 42
+prng = np.random.RandomState(seed_value)
+
 # -----------
 # Oscillation
 use_oscillation = True
-A = 0.5
+A = 1.0
 f = 8
 phi = 0
 min_A = 0
@@ -285,51 +288,51 @@ class Network:
                         (b_avg**2)) / (N * (nu**2) * V_sm)
                 W_sd = np.sqrt(W_sm - W_avg**2)
 
-                self.W[m] = W_avg + 3.465 * W_sd * np.random.uniform(
+                self.W[m] = W_avg + 3.465 * W_sd * prng.uniform(
                     -1, 1, size=(self.n[m], N))
-                self.b[m] = b_avg + 3.465 * b_sd * np.random.uniform(
+                self.b[m] = b_avg + 3.465 * b_sd * prng.uniform(
                     -1, 1, size=(self.n[m], 1))
             else:
-                self.W[m] = 0.1 * np.random.uniform(-1, 1, size=(self.n[m], N))
-                self.b[m] = 1.0 * np.random.uniform(-1, 1, size=(self.n[m], 1))
+                self.W[m] = 0.1 * prng.uniform(-1, 1, size=(self.n[m], N))
+                self.b[m] = 1.0 * prng.uniform(-1, 1, size=(self.n[m], 1))
 
             # generate feedback weights & biases; in the paper, we do not use feedback biases
             if m != 0:
                 if use_broadcast:
                     if use_weight_optimization:
                         self.Y[m -
-                               1] = W_avg + 3.465 * W_sd * np.random.uniform(
+                               1] = W_avg + 3.465 * W_sd * prng.uniform(
                                    -1, 1, size=(N, self.n[-1]))
 
                         if use_feedback_bias:
                             self.c[
                                 m -
-                                1] = b_avg + 3.465 * b_sd * np.random.uniform(
+                                1] = b_avg + 3.465 * b_sd * prng.uniform(
                                     -1, 1, size=(N, 1))
                     else:
-                        self.Y[m - 1] = np.random.uniform(
+                        self.Y[m - 1] = prng.uniform(
                             -1, 1, size=(N, self.n[-1]))
 
                         if use_feedback_bias:
-                            self.c[m - 1] = np.random.uniform(
+                            self.c[m - 1] = prng.uniform(
                                 -1, 1, size=(N, 1))
                 else:
                     if use_weight_optimization:
                         self.Y[m -
-                               1] = W_avg + 3.465 * W_sd * np.random.uniform(
+                               1] = W_avg + 3.465 * W_sd * prng.uniform(
                                    -1, 1, size=(N, self.n[m]))
 
                         if use_feedback_bias:
                             self.c[
                                 m -
-                                1] = b_avg + 3.465 * b_sd * np.random.uniform(
+                                1] = b_avg + 3.465 * b_sd * prng.uniform(
                                     -1, 1, size=(N, 1))
                     else:
-                        self.Y[m - 1] = np.random.uniform(
+                        self.Y[m - 1] = prng.uniform(
                             -1, 1, size=(N, self.n[m]))
 
                         if use_feedback_bias:
-                            self.c[m - 1] = np.random.uniform(
+                            self.c[m - 1] = prng.uniform(
                                 -1, 1, size=(N, 1))
 
         if use_symmetric_weights == True:
@@ -339,7 +342,7 @@ class Network:
         if use_sparse_feedback:
             # randomly zero out 80% of weights, increase magnitude of surviving weights to keep desired average voltages
             for m in xrange(self.M - 1):
-                self.Y_dropout_indices[m] = np.random.choice(
+                self.Y_dropout_indices[m] = prng.choice(
                     len(self.Y[m].ravel()), int(0.8 * len(self.Y[m].ravel())),
                     False)
                 self.Y[m].ravel()[self.Y_dropout_indices[m]] = 0
@@ -382,7 +385,7 @@ class Network:
                 if m == self.M - 2:
                     # for final hidden layer, use feedforward weights of output layer
                     if noisy_symmetric_weights:
-                        self.Y[m] = W_above + np.random.normal(
+                        self.Y[m] = W_above + prng.normal(
                             0, 0.05, size=W_above.shape)
                     else:
                         self.Y[m] = W_above
@@ -390,7 +393,7 @@ class Network:
                     # for other hidden layers, use product of all feedforward weights downstream
                     if noisy_symmetric_weights:
                         self.Y[m] = np.dot(
-                            W_above + np.random.normal(
+                            W_above + prng.normal(
                                 0, 0.05, size=W_above.shape), self.Y[m + 1])
                     else:
                         self.Y[m] = np.dot(W_above, self.Y[m + 1])
@@ -404,7 +407,7 @@ class Network:
 
                 # use feedforward weights of the layer downstream
                 if noisy_symmetric_weights:
-                    self.Y[m] = W_above + np.random.normal(0, 0.05)
+                    self.Y[m] = W_above + prng.normal(0, 0.05)
                 else:
                     self.Y[m] = W_above
 
@@ -638,7 +641,7 @@ class Network:
         for time in xrange(l_f_phase):
             # update input spike history
             self.x_hist = np.concatenate(
-                [self.x_hist[:, 1:], np.random.poisson(x)], axis=-1)
+                [self.x_hist[:, 1:], prng.poisson(x)], axis=-1)
 
             # do a forward pass
             self.out_f(training=training)
@@ -740,7 +743,7 @@ class Network:
         for time in xrange(l_t_phase):
             # update input history
             self.x_hist = np.concatenate(
-                [self.x_hist[:, 1:], np.random.poisson(x)], axis=-1)
+                [self.x_hist[:, 1:], prng.poisson(x)], axis=-1)
 
             # calculate backprop angle at the end of the target phase
             calc_E_bp = record_backprop_angle and time == l_t_phase - 1
@@ -894,9 +897,9 @@ class Network:
         if use_rand_phase_lengths:
             # generate phase lengths for all training examples
             global l_f_phase, l_t_phase
-            l_f_phases = min_l_f_phase + np.random.wald(
+            l_f_phases = min_l_f_phase + prng.wald(
                 2, 1, n_epochs * n_training_examples).astype(int)
-            l_t_phases = min_l_t_phase + np.random.wald(
+            l_t_phases = min_l_t_phase + prng.wald(
                 2, 1, n_epochs * n_training_examples).astype(int)
         else:
             l_f_phases = np.zeros(n_epochs * n_training_examples) + l_f_phase
@@ -1258,7 +1261,7 @@ class Network:
                                (k + 1) * n_training_examples, np.newaxis] - 1 -
                     np.minimum(
                         np.abs(
-                            np.random.normal(
+                            prng.normal(
                                 0, 3, size=(n_training_examples,
                                             self.n[m])).astype(int)), 5)
                     for m in range(self.M)
@@ -1279,7 +1282,7 @@ class Network:
                                (k + 1) * n_training_examples, np.newaxis] - 1 -
                     np.minimum(
                         np.abs(
-                            np.random.normal(
+                            prng.normal(
                                 0, 3, size=(n_training_examples,
                                             self.n[m])).astype(int)), 5)
                     for m in range(self.M)
@@ -1986,7 +1989,7 @@ class Layer:
 
         self.S_hist = np.concatenate(
             [self.S_hist[:, 1:],
-             np.random.poisson(self.lambda_C)], axis=-1)
+             prng.poisson(self.lambda_C)], axis=-1)
 
 
 class hiddenLayer(Layer):
@@ -2843,7 +2846,7 @@ def shuffle_arrays(*args):
         results (tuple of ndarrays) : Shuffled arrays.
     '''
 
-    p = np.random.permutation(args[0].shape[1])
+    p = prng.permutation(args[0].shape[1])
     results = (a[:, p] for a in args)
     return results
 

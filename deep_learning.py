@@ -62,8 +62,8 @@ n_quick_test = 100  # number of examples to use for quick tests (every 1000 exam
 """                 Simulation parameters                     """
 # ---------------------------------------------------------------
 
-# -----------
-# Oscillation
+# ----------------------------------------------------------------------------
+# Oscillation params
 use_oscillation = True
 A = 1.0
 f = 8
@@ -72,8 +72,8 @@ min_A = 0
 n_cycles = 1
 onset = 0
 
-# -----------
-# Computation
+# ----------------------------------------------------------------------------
+# Computation params
 nonspiking_mode = False  # whether to run in non-spiking mode (real-valued outputs)
 
 use_rand_phase_lengths = True  # use random phase lengths (chosen from Wald distribution)
@@ -110,6 +110,9 @@ plot_eigvals = False  # dynamically plot maximum eigenvalues for Jacobians
 default_simulations_folder = 'Simulations/'  # folder in which to save simulations (edit accordingly)
 weight_cmap = 'bone'  # color map to use for weight plotting
 
+# -----------------------------------------------------------------------------
+# Create time
+
 dt = 1.0  # time step (ms)
 mem = int(
     10 / dt
@@ -127,6 +130,16 @@ integration_time = l_f_phase - int(
 integration_time_test = l_f_phase_test - int(
     30 / dt)  # time steps of integration of neuronal variables during testing
 
+# ----------------------------------------------------------------------------
+# Create oscillation
+ms = 1000  # dt in ms; need them in seconds
+tspan = (0, integration_time / ms)
+
+# Same osc func as the rest of VB experiments. See:
+# https://github.com/voytekresearch/voltagebudget
+_, osc = burst(tspan, onset, n_cycles, A, f, phi, 1 / (dt * ms), min_A=min_A)
+
+# ----------------------------------------------------------------------------
 if nonspiking_mode:
     print("* ------------ Running in non-spiking mode. ------------ *")
 
@@ -204,7 +217,6 @@ def get_kappas(n=mem):
 
 
 kappas = np.flipud(get_kappas(mem))[:, np.newaxis]  # initialize kappas array
-
 
 # ---------------------------------------------------------------
 """                     Network class                         """
@@ -299,34 +311,40 @@ class Network:
             if m != 0:
                 if use_broadcast:
                     if use_weight_optimization:
-                        self.Y[m - 1] = W_avg + 3.465 * W_sd * np.random.uniform(
-                            -1, 1, size=(N, self.n[-1]))
+                        self.Y[m -
+                               1] = W_avg + 3.465 * W_sd * np.random.uniform(
+                                   -1, 1, size=(N, self.n[-1]))
 
                         if use_feedback_bias:
-                            self.c[m -
-                                   1] = b_avg + 3.465 * b_sd * np.random.uniform(
-                                       -1, 1, size=(N, 1))
+                            self.c[
+                                m -
+                                1] = b_avg + 3.465 * b_sd * np.random.uniform(
+                                    -1, 1, size=(N, 1))
                     else:
                         self.Y[m - 1] = np.random.uniform(
                             -1, 1, size=(N, self.n[-1]))
 
                         if use_feedback_bias:
-                            self.c[m - 1] = np.random.uniform(-1, 1, size=(N, 1))
+                            self.c[m - 1] = np.random.uniform(
+                                -1, 1, size=(N, 1))
                 else:
                     if use_weight_optimization:
-                        self.Y[m - 1] = W_avg + 3.465 * W_sd * np.random.uniform(
-                            -1, 1, size=(N, self.n[m]))
+                        self.Y[m -
+                               1] = W_avg + 3.465 * W_sd * np.random.uniform(
+                                   -1, 1, size=(N, self.n[m]))
 
                         if use_feedback_bias:
-                            self.c[m -
-                                   1] = b_avg + 3.465 * b_sd * np.random.uniform(
-                                       -1, 1, size=(N, 1))
+                            self.c[
+                                m -
+                                1] = b_avg + 3.465 * b_sd * np.random.uniform(
+                                    -1, 1, size=(N, 1))
                     else:
                         self.Y[m - 1] = np.random.uniform(
                             -1, 1, size=(N, self.n[m]))
 
                         if use_feedback_bias:
-                            self.c[m - 1] = np.random.uniform(-1, 1, size=(N, 1))
+                            self.c[m - 1] = np.random.uniform(
+                                -1, 1, size=(N, 1))
 
         if use_symmetric_weights == True:
             # enforce symmetric weights
@@ -386,8 +404,8 @@ class Network:
                     # for other hidden layers, use product of all feedforward weights downstream
                     if noisy_symmetric_weights:
                         self.Y[m] = np.dot(
-                            W_above + np.random.normal(0, 0.05, size=W_above.shape),
-                            self.Y[m + 1])
+                            W_above + np.random.normal(
+                                0, 0.05, size=W_above.shape), self.Y[m + 1])
                     else:
                         self.Y[m] = np.dot(W_above, self.Y[m + 1])
         else:
@@ -2219,11 +2237,10 @@ class hiddenLayer(Layer):
 
         self.B = np.dot(self.net.W[self.m], self.PSP_B) + self.net.b[self.m]
 
-    def update_C(self):
+    def update_C(self, phase):
         '''
         Update somatic potentials & calculate firing rates.
         '''
-        
 
         if use_conductances:
             # Computation
@@ -2235,22 +2252,8 @@ class hiddenLayer(Layer):
             self.C += self.C_dot * dt
 
             # Oscillation?
-            if use_oscillation:
-                ms = 1000  # dt in ms; need them in seconds
-                tspan = (self.integration_counter / ms,
-                         self.integration_counter / ms + 1 / ms)
-
-                # Same osc func as the rest of VB experiments. See:
-                # https://github.com/voytekresearch/voltagebudget
-                _, self.O = burst(
-                    tspan,
-                    onset,
-                    n_cycles,
-                    A,
-                    f,
-                    phi,
-                    1 / (dt * ms),
-                    min_A=min_A)
+            if use_oscillation and (phase == "forward"):
+                self.O = osc[self.integration_counter]
             else:
                 self.O = 0.0
 
@@ -2278,7 +2281,7 @@ class hiddenLayer(Layer):
 
         self.update_B(f_input)
         self.update_A(b_input)
-        self.update_C()
+        self.update_C(phase="forward")
         self.spike()
 
         self.integration_counter = (
@@ -2295,7 +2298,7 @@ class hiddenLayer(Layer):
 
         self.update_B(f_input)
         self.update_A(b_input)
-        self.update_C()
+        self.update_C(phase="target")
         self.spike()
 
         self.integration_counter = (

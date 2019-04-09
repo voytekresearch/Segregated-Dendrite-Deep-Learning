@@ -71,6 +71,7 @@ phi = 0
 min_A = 0
 n_cycles = 1
 onset = 0
+ms = 1000  # dt in ms; need them in seconds
 
 # ----------------------------------------------------------------------------
 # Computation params
@@ -119,7 +120,7 @@ mem = int(
 )  # spike memory (time steps) - used to limit PSP integration of past spikes (for performance)
 
 # l_f_phase = int(50 / dt)  # length of forward phase (time steps)
-l_f_phase = int((125 + 30) / dt)  # length of forward phase (time steps)
+l_f_phase = int(125 / dt)  # length of forward phase (time steps)
 l_t_phase = int(50 / dt)  # length of target phase (time steps)
 l_f_phase_test = int(
     250 / dt)  # length of forward phase for tests (time steps)
@@ -130,14 +131,6 @@ integration_time = l_f_phase - int(
 integration_time_test = l_f_phase_test - int(
     30 / dt)  # time steps of integration of neuronal variables during testing
 
-# ----------------------------------------------------------------------------
-# Create oscillation
-ms = 1000  # dt in ms; need them in seconds
-tspan = (0, integration_time / ms)
-
-# Same osc func as the rest of VB experiments. See:
-# https://github.com/voytekresearch/voltagebudget
-_, osc = burst(tspan, onset, n_cycles, A, f, phi, 1 / (dt * ms), min_A=min_A)
 
 # ----------------------------------------------------------------------------
 if nonspiking_mode:
@@ -2251,13 +2244,19 @@ class hiddenLayer(Layer):
                 self.C_dot = -g_L * self.C + g_B * (self.B - self.C)
             self.C += self.C_dot * dt
 
+            # TODO:
             # Oscillation?
             if use_oscillation and (phase == "forward"):
+                osc_span = (0, l_f_phase / ms)
+
+                # Same osc func as the rest of VB experiments. See:
+                # https://github.com/voytekresearch/voltagebudget
+                _, osc = burst(
+                    osc_span, onset, n_cycles, A, f, phi, 1 / (dt * ms), min_A=min_A)
+                
                 self.O = osc[self.integration_counter]
             else:
                 self.O = 0.0
-
-            # TODO Inject oscillation to computation (self.O might be 0).
             self.C += self.O
         else:
             self.C = k_B * self.B
@@ -2281,7 +2280,7 @@ class hiddenLayer(Layer):
 
         self.update_B(f_input)
         self.update_A(b_input)
-        self.update_C(phase="forward")
+        self.update_C("forward")
         self.spike()
 
         self.integration_counter = (
@@ -2298,7 +2297,7 @@ class hiddenLayer(Layer):
 
         self.update_B(f_input)
         self.update_A(b_input)
-        self.update_C(phase="target")
+        self.update_C("target")
         self.spike()
 
         self.integration_counter = (

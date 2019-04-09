@@ -19,7 +19,6 @@ Copyright (C) 2017 Jordan Guerguiev
 
 import deep_learning as dl
 import numpy as np
-np.random.seed(42)
 
 # silence 80% of feedback weights
 dl.use_sparse_feedback = True
@@ -41,7 +40,7 @@ net.train(
     n_training_examples,
     save_simulation=True,
     simulations_folder="Simulations",
-    folder_name="Comp Simulation")
+    folder_name="Osc Simulation")
 
 # # re-load the saved simulation & network
 # net, f_etas, b_etas, n_training_examples = dl.load_simulation(

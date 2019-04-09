@@ -50,6 +50,7 @@ import time
 import shutil
 import json
 from scipy.special import expit
+from voltagebudget.util import burst
 
 if sys.version_info >= (3, ):
     xrange = range
@@ -66,7 +67,7 @@ prng = np.random.RandomState(seed_value)
 
 # -----------
 # Oscillation
-use_oscillation = False
+use_oscillation = True
 A = 1.0
 f = 8
 phi = 0
@@ -206,6 +207,7 @@ def get_kappas(n=mem):
 
 
 kappas = np.flipud(get_kappas(mem))[:, np.newaxis]  # initialize kappas array
+
 
 # ---------------------------------------------------------------
 """                     Network class                         """
@@ -2224,7 +2226,7 @@ class hiddenLayer(Layer):
         '''
         Update somatic potentials & calculate firing rates.
         '''
-        from voltagebudget.util import burst
+        
 
         if use_conductances:
             # Computation

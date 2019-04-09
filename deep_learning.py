@@ -64,7 +64,7 @@ n_quick_test = 100  # number of examples to use for quick tests (every 1000 exam
 
 # ----------------------------------------------------------------------------
 # Oscillation params
-use_oscillation = True
+use_oscillation = False
 A = 1.0
 f = 8
 phi = 0
@@ -120,7 +120,7 @@ mem = int(
 )  # spike memory (time steps) - used to limit PSP integration of past spikes (for performance)
 
 # l_f_phase = int(50 / dt)  # length of forward phase (time steps)
-l_f_phase = int(125 / dt)  # length of forward phase (time steps)
+l_f_phase = int(125 + 30 / dt)  # length of forward phase (time steps)
 l_t_phase = int(50 / dt)  # length of target phase (time steps)
 l_f_phase_test = int(
     250 / dt)  # length of forward phase for tests (time steps)
@@ -210,6 +210,7 @@ def get_kappas(n=mem):
 
 
 kappas = np.flipud(get_kappas(mem))[:, np.newaxis]  # initialize kappas array
+
 
 # ---------------------------------------------------------------
 """                     Network class                         """
@@ -2247,7 +2248,7 @@ class hiddenLayer(Layer):
             # TODO:
             # Oscillation?
             if use_oscillation and (phase == "forward"):
-                osc_span = (0, l_f_phase / ms)
+                osc_span = (0, integration_time / ms)
 
                 # Same osc func as the rest of VB experiments. See:
                 # https://github.com/voytekresearch/voltagebudget

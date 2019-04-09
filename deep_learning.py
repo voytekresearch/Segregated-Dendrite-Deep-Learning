@@ -62,9 +62,6 @@ n_quick_test = 100  # number of examples to use for quick tests (every 1000 exam
 """                 Simulation parameters                     """
 # ---------------------------------------------------------------
 
-seed_value = 42
-np.random.seed(seed_value)
-
 # -----------
 # Oscillation
 use_oscillation = True

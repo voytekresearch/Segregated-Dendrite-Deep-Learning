@@ -20,6 +20,9 @@ Copyright (C) 2017 Jordan Guerguiev
 import deep_learning as dl
 import numpy as np
 
+seed_value = 42
+np.random.seed(seed_value)
+
 # silence 80% of feedback weights
 dl.use_sparse_feedback = True
 

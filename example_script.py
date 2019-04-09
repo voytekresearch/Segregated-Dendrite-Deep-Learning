@@ -20,7 +20,9 @@ Copyright (C) 2017 Jordan Guerguiev
 import deep_learning as dl
 import numpy as np
 
-seed_value = 42
+# For some reason this can't be run reproducibly; all trials
+# wind up identical. Attemps to use prng instead failed; not sure why.
+seed_value = None
 np.random.seed(seed_value)
 
 # silence 80% of feedback weights

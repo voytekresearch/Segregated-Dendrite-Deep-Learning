@@ -64,7 +64,7 @@ n_quick_test = 100  # number of examples to use for quick tests (every 1000 exam
 
 # ----------------------------------------------------------------------------
 # Oscillation params
-use_oscillation = False
+use_oscillation = True
 A = 1.0
 f = 8
 phi = 0
@@ -119,18 +119,16 @@ mem = int(
     10 / dt
 )  # spike memory (time steps) - used to limit PSP integration of past spikes (for performance)
 
-# l_f_phase = int(50 / dt)  # length of forward phase (time steps)
-l_f_phase = int(125 + 30 / dt)  # length of forward phase (time steps)
+l_f_phase = int(125 / dt)  # length of forward phase (time steps)
 l_t_phase = int(50 / dt)  # length of target phase (time steps)
 l_f_phase_test = int(
     250 / dt)  # length of forward phase for tests (time steps)
+l_osc = int(125 / dt)
 
-integration_time = l_f_phase - int(
-    30 /
-    dt)  # time steps of integration of neuronal variables used for plasticity
-integration_time_test = l_f_phase_test - int(
-    30 / dt)  # time steps of integration of neuronal variables during testing
-
+# time steps of integration of neuronal variables used for plasticity
+integration_time = l_f_phase - int(30 / dt)
+# time steps of integration of neuronal variables during testing
+integration_time_test = l_f_phase_test - int(30 / dt)
 
 # ----------------------------------------------------------------------------
 if nonspiking_mode:
@@ -210,7 +208,6 @@ def get_kappas(n=mem):
 
 
 kappas = np.flipud(get_kappas(mem))[:, np.newaxis]  # initialize kappas array
-
 
 # ---------------------------------------------------------------
 """                     Network class                         """
@@ -644,6 +641,8 @@ class Network:
             ]
 
         for time in xrange(l_f_phase):
+            # print(time, self.l[0].oscillation_counter, self.l[0].O, self.l[0].C[0,0])
+
             # update input spike history
             self.x_hist = np.concatenate(
                 [self.x_hist[:, 1:], np.random.poisson(x)], axis=-1)
@@ -2069,7 +2068,7 @@ class hiddenLayer(Layer):
         self.C = np.zeros((self.size, 1))
         self.lambda_C = np.zeros((self.size, 1))
 
-        self.O = np.zeros((self.size, 1))
+        self.O = 0.0  # Global osc -> scalar
 
         self.S_hist = np.zeros((self.size, mem), dtype=np.int8)
 
@@ -2092,6 +2091,7 @@ class hiddenLayer(Layer):
 
         # set integration counter
         self.integration_counter = 0
+        self.oscillation_counter = 0
 
         # create integration variables
         self.create_integration_vars()
@@ -2143,6 +2143,7 @@ class hiddenLayer(Layer):
         self.alpha_t *= 0
 
         self.integration_counter = 0
+        self.oscillation_counter = 0
 
     def update_W(self):
         '''
@@ -2248,14 +2249,16 @@ class hiddenLayer(Layer):
             # TODO:
             # Oscillation?
             if use_oscillation and (phase == "forward"):
-                osc_span = (0, integration_time / ms)
+                # create oscillation for injection
+                osc_span = (0, l_f_phase / ms)
 
                 # Same osc func as the rest of VB experiments. See:
                 # https://github.com/voytekresearch/voltagebudget
-                _, osc = burst(
-                    osc_span, onset, n_cycles, A, f, phi, 1 / (dt * ms), min_A=min_A)
-                
-                self.O = osc[self.integration_counter]
+                _, osc = burst(osc_span, onset, n_cycles, A, f, phi, 1 / (dt * ms), min_A=min_A)
+
+                self.O = osc[self.oscillation_counter]
+                self.oscillation_counter = (
+                    self.oscillation_counter + 1) % l_f_phase
             else:
                 self.O = 0.0
             self.C += self.O
